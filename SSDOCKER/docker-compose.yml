@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: superset_cache
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+
+  db:
+    image: postgres:14
+    container_name: superset_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_USER: superset
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  superset:
+    build: .
+    container_name: superset_app
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    environment:
+      - SUPERSET_SECRET_KEY=your_secret_key_here_change_in_production
+      - DATABASE_DIALECT=postgresql
+      - DATABASE_USER=superset
+      - DATABASE_PASSWORD=superset
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DATABASE_DB=superset
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./superset_home:/app/superset_home
+
+volumes:
+  db_data:
+  redis:
